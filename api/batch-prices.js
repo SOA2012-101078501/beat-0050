@@ -81,25 +81,47 @@ export default async function handler(req, res) {
 
 /**
  * 取得歷史股價（Yahoo Finance）
+ * 如果當日無資料，自動往前查詢最近的交易日
  */
 async function getHistoricalPrice(symbol, date) {
   try {
     const yahooSymbol = `${symbol}.TW`;
-    const timestamp = Math.floor(new Date(date).getTime() / 1000);
-    const endTimestamp = timestamp + 86400;
+    const targetDate = new Date(date);
+    
+    // 嘗試查詢目標日期前後 7 天的資料
+    const startTimestamp = Math.floor(targetDate.getTime() / 1000) - (7 * 86400);
+    const endTimestamp = Math.floor(targetDate.getTime() / 1000) + (7 * 86400);
 
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?period1=${timestamp}&period2=${endTimestamp}&interval=1d`;
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?period1=${startTimestamp}&period2=${endTimestamp}&interval=1d`;
 
     const response = await fetch(url);
+    if (!response.ok) return null;
 
-    if (!response.ok) {
+    const data = await response.json();
+    
+    if (!data.chart?.result?.[0]?.timestamp || !data.chart?.result?.[0]?.indicators?.quote?.[0]?.close) {
       return null;
     }
 
-    const data = await response.json();
-    const closePrice = data.chart?.result?.[0]?.indicators?.quote?.[0]?.close?.[0];
+    const timestamps = data.chart.result[0].timestamp;
+    const closePrices = data.chart.result[0].indicators.quote[0].close;
+    
+    // 找到最接近目標日期的交易日
+    const targetTimestamp = Math.floor(targetDate.getTime() / 1000);
+    let closestIndex = -1;
+    let minDiff = Infinity;
+    
+    for (let i = 0; i < timestamps.length; i++) {
+      const diff = Math.abs(timestamps[i] - targetTimestamp);
+      if (diff < minDiff && closePrices[i] !== null) {
+        minDiff = diff;
+        closestIndex = i;
+      }
+    }
+    
+    if (closestIndex === -1) return null;
 
-    return closePrice ?? null;
+    return closePrices[closestIndex];
 
   } catch (error) {
     console.error('取得歷史股價失敗:', error);
