@@ -71,6 +71,11 @@ function FileUpload({ onAnalysisComplete }) {
       // 1. 解析 CSV 檔案
       console.log('開始解析 CSV...', files);
       const { transactions, errors } = await parseMultipleCSVFiles(files);
+      
+      // Debug: 顯示解析結果
+      console.log('解析結果 - 交易數:', transactions.length);
+      console.log('解析結果 - 前3筆:', transactions.slice(0, 3));
+      console.log('解析錯誤:', errors);
 
       if (errors.length > 0) {
         console.warn('解析警告:', errors);
@@ -101,8 +106,24 @@ function FileUpload({ onAnalysisComplete }) {
       // 4. 取得摘要
       const summary = getTransactionSummary(uniqueTxns);
 
-      // 5. TODO: 計算績效（目前先返回模擬數據）
-      const mockResult = {
+      // 5. 計算績效
+      console.log('開始計算績效...');
+
+      // 動態載入計算模組
+      const { calculateUserPerformance } = await import('../../services/performanceEngine.js');
+      const { calculate0050Performance } = await import('../../services/etf0050Calculator.js');
+
+      // 計算用戶績效
+      const userPerformance = await calculateUserPerformance(uniqueTxns);
+
+      // 計算 0050 對比績效
+      const etf0050Performance = await calculate0050Performance(uniqueTxns);
+
+      // 計算比較結果
+      const difference = userPerformance.returnRate - etf0050Performance.returnRate;
+      const isBetter = difference > 0;
+
+      const result = {
         transactions: uniqueTxns,
         summary: {
           ...summary,
@@ -110,28 +131,18 @@ function FileUpload({ onAnalysisComplete }) {
           parseErrors: errors.length,
           validationWarnings: validationErrors.filter(e => e.warning).length
         },
-        // 模擬績效數據（後續實作真正的計算）
         performance: {
-          user: {
-            returnRate: 25.3,
-            totalInvested: summary.totalInvested,
-            currentValue: summary.totalInvested * 1.253,
-            totalPL: summary.totalInvested * 0.253
-          },
-          etf0050: {
-            returnRate: 18.7,
-            totalInvested: summary.totalInvested,
-            currentValue: summary.totalInvested * 1.187,
-            totalPL: summary.totalInvested * 0.187
-          },
+          user: userPerformance,
+          etf0050: etf0050Performance,
           comparison: {
-            difference: 6.6,
-            isBetter: true
+            difference: difference,
+            isBetter: isBetter
           }
         }
       };
 
-      onAnalysisComplete(mockResult);
+      console.log('績效計算完成:', result);
+      onAnalysisComplete(result);
     } catch (error) {
       console.error('分析失敗:', error);
       setError(error.message || '分析失敗，請檢查檔案格式');
