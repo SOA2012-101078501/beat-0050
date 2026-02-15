@@ -103,10 +103,28 @@ function FileUpload({ onAnalysisComplete }) {
         return;
       }
 
-      // 4. 取得摘要
+      // 4. 檢查日期範圍（0050 上市日）
+      const MIN_DATE = '2003-06-30';
+      const oldTransactions = uniqueTxns.filter(t => t.date < MIN_DATE);
+      
+      if (oldTransactions.length > 0) {
+        const oldestDate = oldTransactions.reduce((min, t) => 
+          t.date < min ? t.date : min, oldTransactions[0].date
+        );
+        
+        setError(
+          `⚠️ 發現 ${oldTransactions.length} 筆交易早於 0050 上市日期（2003/06/30）\n` +
+          `最早日期：${oldestDate}\n` +
+          `這些交易無法與 0050 比較，建議移除後重新上傳`
+        );
+        setIsProcessing(false);
+        return;
+      }
+
+      // 5. 取得摘要
       const summary = getTransactionSummary(uniqueTxns);
 
-      // 5. 計算績效
+      // 6. 計算績效
       console.log('開始計算績效...');
 
       // 動態載入計算模組

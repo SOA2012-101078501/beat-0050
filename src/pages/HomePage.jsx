@@ -111,7 +111,7 @@ function HomePage({ onAnalysisComplete }) {
       {/* Privacy */}
       <section className="bg-gray-100 py-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white rounded-card p-8">
+          <div className="bg-white rounded-card p-8 mb-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
               <span>🔒</span>
               您的資料安全
@@ -134,6 +134,35 @@ function HomePage({ onAnalysisComplete }) {
                 <span>無需註冊登入</span>
               </li>
             </ul>
+          </div>
+
+          {/* 資料範圍說明 */}
+          <div className="bg-blue-50 border border-blue-200 rounded-card p-6">
+            <h3 className="text-lg font-bold text-blue-900 mb-3 flex items-center gap-2">
+              <span>📅</span>
+              資料範圍說明
+            </h3>
+            <div className="space-y-3 text-sm text-blue-800">
+              <div>
+                <p className="font-semibold mb-1">股價資料來源：</p>
+                <p>Yahoo Finance（真實股價，每日更新）</p>
+              </div>
+              <div>
+                <p className="font-semibold mb-1">0050 資料範圍：</p>
+                <p>2003 年 6 月 30 日（上市日）至今</p>
+              </div>
+              <div>
+                <p className="font-semibold mb-1">建議使用：</p>
+                <p>請上傳 <strong>2003/06/30 之後</strong>的交易記錄</p>
+                <p className="text-xs mt-1 text-blue-600">
+                  ⚠️ 更早的日期可能無法取得 0050 股價資料
+                </p>
+              </div>
+              <div>
+                <p className="font-semibold mb-1">更新頻率：</p>
+                <p>每個交易日收盤後自動更新（約 14:30 之後）</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
